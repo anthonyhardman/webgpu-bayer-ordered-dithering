@@ -1,6 +1,7 @@
 export interface ControlsState {
   matrixSize: number;
   edgeWeight: number;
+  displayMode: 'dithering' | 'edges' | 'original';
 }
 
 export type ControlsUpdateCallback = (state: ControlsState) => void;
@@ -26,6 +27,7 @@ export class UIControls {
     this.setupMatrixSizeControls();
     this.setupEdgeWeightControl();
     this.setupImageUploadControl();
+    this.setupToggleControls();
   }
 
   private setupMatrixSizeControls(): void {
@@ -59,6 +61,18 @@ export class UIControls {
       if (file) {
         this.onImageUpload(file);
       }
+    });
+  }
+
+  private setupToggleControls(): void {
+    document.querySelectorAll('input[name="displayMode"]').forEach((radio) => {
+      radio.addEventListener("change", (event) => {
+        const target = event.target as HTMLInputElement;
+        const value = target.value as 'dithering' | 'edges' | 'original';
+        
+        this.state.displayMode = value;
+        this.onUpdate(this.state);
+      });
     });
   }
 

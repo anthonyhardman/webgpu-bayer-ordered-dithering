@@ -20,6 +20,7 @@ export const fragmentShader = `
     texelSize: vec2<f32>,
     edgeWeight: f32,
     frameCount: f32,
+    displayMode: u32,
   };
 
   @group(0) @binding(0) var mySampler: sampler;
@@ -71,18 +72,41 @@ export const fragmentShader = `
   fn main(@builtin(position) fragCoord: vec4<f32>, @location(0) texCoords: vec2<f32>) -> @location(0) vec4<f32> {
     let color = textureSample(myTexture, mySampler, texCoords);
     
+    // Display mode: 0 = dithering, 1 = edges, 2 = original
+    if (uniforms.displayMode == 2) {
+      // Original image
+      return color;
+    }
+    
+    if (uniforms.displayMode == 1) {
+      // Edge detection visualization with color palette
+      let edge = sobelEdge(texCoords, uniforms.texelSize);
+      let edgeIntensity = clamp(edge * uniforms.edgeWeight, 0.0, 1.0);
+      
+      let darkColor = vec3<f32>(0.1, 0.05, 0.2);  // Deep purple
+      let brightColor = vec3<f32>(0.2, 0.9, 1.0);  // Bright cyan
+      let edgeColor = mix(darkColor, brightColor, edgeIntensity);
+      
+      return vec4<f32>(edgeColor, 1.0);
+    }
+    
+    // Dithering mode (default)
     let luminance: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
     let coord = vec2<u32>(u32(fragCoord.x), u32(fragCoord.y));
-
+    
     let edge = sobelEdge(texCoords, uniforms.texelSize);
     let edgeFactor = clamp(edge * uniforms.edgeWeight, 0.0, 1.0);
     let sinOffset = sin(uniforms.frameCount * 0.001) * 0.2;
-
+    
     let ditherThreshold = mix(getMatrixValue(coord) + sinOffset, 0.5, edgeFactor);
-
+    
+    // Better color palette: deep purple/black and cyan/white
+    let darkColor = vec3<f32>(0.1, 0.05, 0.2);  // Deep purple
+    let brightColor = vec3<f32>(0.2, 0.9, 1.0);  // Bright cyan
+    
     let outColor = select(
-        vec4<f32>(vec3<f32>(0.0), 1.0),
-        vec4<f32>(vec3<f32>(0.3333, 0.6, 3.0), 1.0),
+        vec4<f32>(darkColor, 1.0),
+        vec4<f32>(brightColor, 1.0),
         luminance > ditherThreshold 
     );
 

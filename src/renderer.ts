@@ -6,6 +6,7 @@ export interface UniformData {
   matrixSize: number;
   edgeWeight: number;
   imageBitmap: ImageBitmap;
+  displayMode: number; // 0 = dithering, 1 = edges, 2 = original
 }
 
 export class Renderer {
@@ -33,7 +34,7 @@ export class Renderer {
 
   private createUniformBuffer(): GPUBuffer {
     return this.device.createBuffer({
-      size: 28,
+      size: 32,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
   }
@@ -122,15 +123,18 @@ export class Renderer {
   }
 
   private updateUniforms(uniformData: UniformData): void {
-    const buffer = new ArrayBuffer(28);
+    const buffer = new ArrayBuffer(32);
     const u32View = new Uint32Array(buffer);
     const f32View = new Float32Array(buffer);
 
     u32View[0] = uniformData.matrixSize;
+    u32View[1] = 0; // padding
     f32View[2] = 1 / uniformData.imageBitmap.width;
     f32View[3] = 1 / uniformData.imageBitmap.height;
     f32View[4] = uniformData.edgeWeight;
     f32View[5] = this.frameCount;
+    u32View[6] = uniformData.displayMode;
+    u32View[7] = 0; // padding
 
     this.device.queue.writeBuffer(this.uniformBuffer, 0, buffer);
   }

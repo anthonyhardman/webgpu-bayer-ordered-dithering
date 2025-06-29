@@ -30,12 +30,14 @@ class App {
     const initialState: ControlsState = {
       matrixSize: 2,
       edgeWeight: 4,
+      displayMode: 'dithering',
     };
 
     this.uniformData = {
       matrixSize: initialState.matrixSize,
       edgeWeight: initialState.edgeWeight,
       imageBitmap: this.currentImageBitmap,
+      displayMode: this.getDisplayModeValue(initialState.displayMode),
     };
 
     this._controls = new UIControls(
@@ -51,6 +53,16 @@ class App {
   private onControlsUpdate(state: ControlsState): void {
     this.uniformData.matrixSize = state.matrixSize;
     this.uniformData.edgeWeight = state.edgeWeight;
+    this.uniformData.displayMode = this.getDisplayModeValue(state.displayMode);
+  }
+
+  private getDisplayModeValue(mode: 'dithering' | 'edges' | 'original'): number {
+    switch (mode) {
+      case 'dithering': return 0;
+      case 'edges': return 1;
+      case 'original': return 2;
+      default: return 0;
+    }
   }
 
   private async onImageUpload(file: File): Promise<void> {
